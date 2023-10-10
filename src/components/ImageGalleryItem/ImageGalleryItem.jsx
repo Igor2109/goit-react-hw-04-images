@@ -1,8 +1,5 @@
-import React, { Component } from 'react';
 
-export class ImageGalleryItem extends Component {
-    render() {
-      const { image, onClick } = this.props;
+export const ImageGalleryItem = ({ image, onClick }) => {
   
       return (
         <li className='ImageGalleryItem' onClick={onClick}>
@@ -14,4 +11,3 @@ export class ImageGalleryItem extends Component {
         </li>
       );
     }
-  }

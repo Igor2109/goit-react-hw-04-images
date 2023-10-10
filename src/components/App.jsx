@@ -1,104 +1,98 @@
-import React, { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { Searchbar } from './Searchbar/Searchbar';
 import { ImageGallery } from './ImageGallery/ImageGallery';
 import { Loader } from './Loader/Loader';
 import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 import { handleSearch } from './api';
-export class App extends Component {
-  state = {
-    query: '',
-    images: [],
-    page: 1,
-    isLoading: false,
-    error: null,
-    isModalOpen: false,
-    selectedImageURL: '',
-    loadMore: false,
-    tags: '',
-  };
+export const App = () => {
+  // state = {
+  //   query: '',
+  //   images: [],
+  //   page: 1,
+  //   isLoading: false,
+  //   error: null,
+  //   isModalOpen: false,
+  //   selectedImageURL: '',
+  //   loadMore: false,
+  //   tags: '',
+  // };
+  const [query, setQuery] = useState('');
+  const [images, setImages] = useState([]);
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImageURL, setSelectedImageURL] = useState('');
+  const [loadMore, setLoadMore] = useState(false);
+  const [tags, setTags] = useState('');
 
-  componentDidUpdate(_, prevState) {
-    if (
-      this.state.query !== prevState.query ||
-      this.state.page !== prevState.page
-    ) {
-      this.loadImages();
+  useEffect(() => {
+    const loadImages = async () => {
+      try {
+        setIsLoading(true);
+        const { hits, totalHits } = await handleSearch(query, page);
+        if (hits.length === 0) {
+          return alert('Not found');
+        }
+
+        setImages(prevState => [...prevState, ...hits]);
+        setLoadMore(page < Math.ceil(totalHits / 12));
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (query) {
+      loadImages();
     }
-  }
-  handleSearchSubmit = query => {
+  }, [query, page]);
+
+  const handleSearchSubmit = query => {
     if (!query.trim()) {
       alert('Please enter a valid search query.');
       return;
     }
 
-    this.setState({ query, images: [], page: 1 });
+    setQuery(query);
+    setImages([]);
+    setPage(1);
   };
 
-  loadImages = async () => {
-    const { query, page } = this.state;
-
-    try {
-      const { hits, totalHits } = await handleSearch(query, page);
-      if (hits.length === 0) {
-        return alert('Not find');
-      }
-      this.setState(prevState => ({
-        images: [...prevState.images, ...hits],
-        loadMore: page < Math.ceil(totalHits / 12),
-      }));
-    } catch (error) {
-      this.setState({ error });
-    } finally {
-      this.setState({ isLoading: false });
-    }
+  const loadMoreImages = () => {
+    setPage(prevState => prevState + 1);
   };
 
-  loadMoreImages = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const openModal = (imageURL, tags) => {
+
+    setIsModalOpen(true)
+    setSelectedImageURL(imageURL)
+    setTags(tags)
   };
 
-  openModal = (imageURL, tags) => {
-    this.setState({
-      isModalOpen: true,
-      selectedImageURL: imageURL,
-      tags,
-    });
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedImageURL('')
+    setTags('')
   };
 
-  closeModal = () => {
-    this.setState({
-      isModalOpen: false,
-      selectedImageURL: '',
-      tags: '',
-    });
-  };
 
-  render() {
-    const { images, isLoading, error, isModalOpen, selectedImageURL, tags, loadMore } =
-      this.state;
+  return (
+    <div className={CSS.App}>
+      <Searchbar onSubmit={handleSearchSubmit} />
+      {images.length > 0 && (
+        <ImageGallery images={images} openModal={openModal} />
+      )}
 
-    return (
-      <div className={CSS.App}>
-       
-        <Searchbar onSubmit={this.handleSearchSubmit} />
-        {images.length>0 && <ImageGallery images={images} openModal={this.openModal}/>}
-        
-        {isLoading && <Loader /> }
-        {loadMore && !isLoading && images.length > 0 &&  (
-          <Button onClick={this.loadMoreImages} />
-        )}
-        {error && <p className={CSS.Error}>Somthing went wrong</p>}
-        {isModalOpen && (
-          <Modal
-            imageURL={selectedImageURL}
-            onClose={this.closeModal}
-            tags={tags}
-          />
-        )}
-      </div>
-    );
-  }
-}
+      {isLoading && <Loader />}
+      {loadMore && !isLoading && images.length > 0 && (
+        <Button onClick={loadMoreImages} />
+      )}
+      {error && <p className={CSS.Error}>Somthing went wrong</p>}
+      {isModalOpen && (
+        <Modal imageURL={selectedImageURL} onClose={closeModal} tags={tags} />
+      )}
+    </div>
+  );
+};
