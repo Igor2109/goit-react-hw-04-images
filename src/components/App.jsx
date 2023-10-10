@@ -6,17 +6,6 @@ import { Button } from './Button/Button';
 import { Modal } from './Modal/Modal';
 import { handleSearch } from './api';
 export const App = () => {
-  // state = {
-  //   query: '',
-  //   images: [],
-  //   page: 1,
-  //   isLoading: false,
-  //   error: null,
-  //   isModalOpen: false,
-  //   selectedImageURL: '',
-  //   loadMore: false,
-  //   tags: '',
-  // };
   const [query, setQuery] = useState('');
   const [images, setImages] = useState([]);
   const [page, setPage] = useState(1);
